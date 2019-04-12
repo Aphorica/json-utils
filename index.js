@@ -47,7 +47,7 @@ class JSONUtils {
    * @param {object} a 
    * @param {object} b 
    */
-  static objcmp(a,b) {
+  static cmpObj(a,b) {
     let objKeys = Object.keys(b);
     let bkey;
     for (let ix = 0; ix < objKeys.length; ++ix) {
