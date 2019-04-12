@@ -1,0 +1,10 @@
+{
+  "name": "@aphorica/json-utils",
+  "version": "1.0.0",
+  "description": "deepAssign, copyObj, and cmpObj functions",
+  "main": "index.js",
+  "repository": "https://github.com/Aphorica/json-utils",
+  "author": "Rick Berger - Aphorica, Inc. <gbergeraph@gmail.com>",
+  "license": "MIT",
+  "private": false
+}
