@@ -1,5 +1,65 @@
 "use strict"
 
+function isMergeableObject(val) {
+    var nonNullObject = val && typeof val === 'object'
+
+    return nonNullObject
+        && Object.prototype.toString.call(val) !== '[object RegExp]'
+        && Object.prototype.toString.call(val) !== '[object Date]'
+}
+
+function emptyTarget(val) {
+    return Array.isArray(val) ? [] : {}
+}
+
+function cloneIfNecessary(value, optionsArgument) {
+    var clone = optionsArgument && optionsArgument.clone === true
+    return (clone && isMergeableObject(value)) ? deepmerge(emptyTarget(value), value, optionsArgument) : value
+}
+
+function defaultArrayMerge(target, source, optionsArgument) {
+    var destination = target.slice()
+    source.forEach(function(e, i) {
+        if (typeof destination[i] === 'undefined') {
+            destination[i] = cloneIfNecessary(e, optionsArgument)
+        } else if (isMergeableObject(e)) {
+            destination[i] = deepmerge(target[i], e, optionsArgument)
+        } else if (target.indexOf(e) === -1) {
+            destination.push(cloneIfNecessary(e, optionsArgument))
+        }
+    })
+    return destination
+}
+
+function mergeObject(target, source, optionsArgument) {
+    var destination = {}
+    if (isMergeableObject(target)) {
+        Object.keys(target).forEach(function (key) {
+            destination[key] = cloneIfNecessary(target[key], optionsArgument)
+        })
+    }
+    Object.keys(source).forEach(function (key) {
+        if (!isMergeableObject(source[key]) || !target[key]) {
+            destination[key] = cloneIfNecessary(source[key], optionsArgument)
+        } else {
+            destination[key] = deepmerge(target[key], source[key], optionsArgument)
+        }
+    })
+    return destination
+}
+
+function deepmerge(target, source, optionsArgument) {
+    var array = Array.isArray(source);
+    var options = optionsArgument || { arrayMerge: defaultArrayMerge }
+    var arrayMerge = options.arrayMerge || defaultArrayMerge
+
+    if (array) {
+        return Array.isArray(target) ? arrayMerge(target, source, optionsArgument) : cloneIfNecessary(source, optionsArgument)
+    } else {
+        return mergeObject(target, source, optionsArgument)
+    }
+}
+
 class JSONUtils {
   /**
 	*  After several sessions debugging Object.assign and {...a, ...b, ...c}
@@ -18,15 +78,14 @@ class JSONUtils {
 	*  29-Jan-2019 - rickb
 	*  
   */
-  static deepAssign(_a, _b) {		
+
+  static deepAssign(_a, _b) {
 		let a = JSON.parse(JSON.stringify(_a));	
 		let b = JSON.parse(JSON.stringify(_b));	
-              // get rid of observers in both
+              // get rid of observers in both,
+              // and work on copies
 
-    if (Array.isArray(a) && Array.isArray(b))
-      return a + [...b];
-    else
-      return {...a, ...b};
+    return deepmerge(a, b)
 	}
 
   /**
